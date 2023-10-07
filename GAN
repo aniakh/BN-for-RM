@@ -1,0 +1,41 @@
+pip install tabgan
+import pandas as pd
+df=pd.read_csv('Proc-GAN num-train-filled.csv')
+target= pd.DataFrame(df['Change of procurement strategy and contract type'])
+train=pd.DataFrame(df).drop(['Change of procurement strategy and contract type'], axis=1)
+import pandas as pd
+df=pd.read_csv('proc_train_num.csv')
+#target= pd.DataFrame(df['Delay and Change of procurement strategy and contract type', 'Delay due to contract awarding/ tender closing', 'Vendor list and supply chain disruption', 'Delays and incompliance due to inefficient coordination of third party suppliers'])
+target= pd.DataFrame(df['Delay and Change of procurement strategy and contract type'])
+train=pd.DataFrame(df).drop(['Delay and Change of procurement strategy and contract type'], axis=1)
+df1=pd.read_csv('Proc-GAN num-test-filled.csv')
+test=pd.DataFrame(df1).drop(['Change of procurement strategy and contract type'], axis=1)
+df1=pd.read_csv('proc_test_num.csv')
+test=pd.DataFrame(df1).drop(['Delay and Change of procurement strategy and contract type'], axis=1)
+from tabgan.sampler import OriginalGenerator, GANGenerator
+import pandas as pd
+import numpy as np
+
+# generate data
+new_train1, new_target1 = OriginalGenerator().generate_data_pipe(train, target, test, )
+new_train2, new_target2 = GANGenerator().generate_data_pipe(train, target, test, )
+
+# example with all params defined
+new_train3, new_target3 = GANGenerator(gen_x_times=1.1, cat_cols=None,
+           bot_filter_quantile=0.001, top_filter_quantile=0.999, is_post_process=True,
+           adversarial_model_params={
+               "metrics": "AUC", "max_depth": 2, "max_bin": 100,
+               "learning_rate": 0.02, "random_state": 42, "n_estimators": 500,
+           }, pregeneration_frac=2, only_generated_data=False,
+           gan_params = {"batch_size": 500, "patience": 25, "epochs" : 500,}).generate_data_pipe(train, target,
+                                          test, deep_copy=True, only_adversarial=False, use_adversarial=True)
+
+frames = [new_train1, new_target1]
+frames2 = [new_train2, new_target2]
+result = pd.concat(frames)
+result2= pd.concat(frames2)
+result.to_csv(r'GAN.csv', index=False)
+result2.to_csv(r'GAN2.csv', index=False)
+frames3 = [new_train3, new_target3]
+result3 = pd.concat(frames3)
+result3.to_csv(r'GAN3.csv', index=False)
